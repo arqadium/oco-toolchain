@@ -1,15 +1,61 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace VersionRC
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
+            Console.WriteLine("RC-based Project Version Autoincrementer");
+            Console.WriteLine("Part of the Trinity Software Build Toolchain");
+            Console.WriteLine("");
+            
+            if(args.Length < 1 || !args[0].EndsWith(".rc"))
+            {
+                Console.WriteLine("ERROR: No RC file specified. Exiting...");
+                
+                return 1;
+            }
+            
+            string inText = File.ReadAllText(args[0],
+                Encoding.UTF8);
+            string outText = inText;
+            Regex exp = new Regex(
+                "Version\",(\\s*)\"([0-9]+)\\.([0-9]+)\\.([0-9]+)(\\-([0-9]+))?"
+                );
+
+            MatchCollection matches = exp.Matches(inText);
+
+            foreach(Match match in matches)
+            {
+                string replText = "";
+
+                if(match.Groups.Count < 5)
+                {
+                    replText = "Version\"," + match.Groups[1].Value + "\"" +
+                        match.Groups[2].Value + "." + match.Groups[3].Value +
+                        "." + match.Groups[4].Value + "-1";
+                }
+                else
+                {
+                    ulong ver = Convert.ToUInt64(match.Groups[6].Value) + 1;
+
+                    replText = "Version\"," + match.Groups[1].Value + "\"" +
+                        match.Groups[2].Value + "." + match.Groups[3].Value +
+                        "." + match.Groups[4].Value + "-" + ver.ToString();
+                }
+
+                outText = Regex.Replace(outText, match.Groups[0].Value,
+                    replText);
+            }
+
+            File.WriteAllText(args[0], outText, Encoding.UTF8);
+            Console.WriteLine("Updated build number.");
+
+            return 0;
         }
     }
 }
