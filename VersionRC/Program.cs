@@ -21,7 +21,7 @@ namespace VersionRC
             }
             
             string inText = File.ReadAllText(args[0],
-                Encoding.UTF8);
+                Encoding.ASCII);
             string outText = inText;
             Regex exp = new Regex(
                 "Version\",(\\s*)\"([0-9]+)\\.([0-9]+)\\.([0-9]+)(\\-([0-9]+))?"
@@ -53,7 +53,7 @@ namespace VersionRC
                     replText);
             }
 
-            File.WriteAllText(args[0], outText, Encoding.UTF8);
+            File.WriteAllText(args[0], outText, Encoding.ASCII);
             Console.WriteLine("Updated build number.");
 
             return 0;
