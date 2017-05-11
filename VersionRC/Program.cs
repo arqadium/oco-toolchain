@@ -33,7 +33,8 @@ namespace VersionRC
             {
                 string replText = "";
 
-                if(match.Groups.Count < 5)
+                if(match.Groups[5].Value == ""
+                || match.Groups[5].Value == "-0")
                 {
                     replText = "Version\"," + match.Groups[1].Value + "\"" +
                         match.Groups[2].Value + "." + match.Groups[3].Value +
