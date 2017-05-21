@@ -9,9 +9,11 @@ namespace VersionRC
     {
         static int Main(string[] args)
         {
+            Console.WriteLine();
             Console.WriteLine("RC-based Project Version Autoincrementer");
-            Console.WriteLine("Part of the Trinity Software Build Toolchain");
-            Console.WriteLine("");
+            Console.WriteLine("Part of the OCo Working Set Toolchain");
+            Console.WriteLine("Copyright (C) 2017 Trinity Software, LLC");
+            Console.WriteLine();
             
             if(args.Length < 1 || !args[0].EndsWith(".rc"))
             {

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("VersionRC")]
-[assembly: AssemblyDescription("RC-based Program Version Autoincrementer")]
+[assembly: AssemblyTitle("CopyDeps")]
+[assembly: AssemblyDescription("Project Dependency Copying Utility")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Trinity Software, LLC")]
-[assembly: AssemblyProduct("VersionRC")]
+[assembly: AssemblyProduct("CopyDrps")]
 [assembly: AssemblyCopyright("Copyright © 2017 Trinity Software, LLC")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -21,7 +21,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(true)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("c87f3bd8-e0fc-42a1-8797-e8f4fd7acc21")]
+[assembly: Guid("f7929c13-f8bb-4041-bdff-9c0bce487b78")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -33,7 +33,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.3.*")]
-[assembly: AssemblyFileVersion("1.0.3.*")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
 [assembly: NeutralResourcesLanguage("en")]
 
