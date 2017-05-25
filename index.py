@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 #
+# Copyright (C) 2017 Trinity Software, LLC. All rights reserved.
+#
 # This document contains proprietary information of TRINITY SOFTWARE and/or its
 # licenced developers and are protected by national and international copyright
 # laws. They may not be disclosed to third parties or copied or duplicated in
@@ -10,181 +12,111 @@
 
 
 ## ============================ F U N C T I O N ============================ ##
-## void incrMajor(string)
+## void modVersion(string, string)
 ##
-## TITLE:       Increment major version number
-## DESCRIPTION: Increments the major version number by 1, resetting the minor,
-##              release, and build numbers to 0.
+## TITLE:       Modify version strings in a header file.
+## DESCRIPTION: This modifies all of the version string #defines it can find in
+##              a specified text file, incrementing a given level and resetting
+##              all of the levels below it to zero. For example, specifying
+##              a minor version level will increment the minor version by 1 and
+##              reset the release and build versions to 0; the major version
+##              will remain the same.
 ##
-## PARAMETER: file path to the configuration header (usually C code) to modify.
-def incrMajor(path):
+## PARAMETER: File path to the configuration header (usually C code) to modify.
+## PARAMETER: The level to target for modification. Possible values are:
+##              - 'major'
+##              - 'minor'
+##              - 'release'
+##              - 'build'
+def modVersion(path, level):
 	f = open(path, 'r')
 	from os import linesep
 	lines = f.read(0x7FFFFFFF).split(linesep)
 	f.close()
 	replaced = False
-	from re import search
-	for line, i in enumerate(lines):
-		sMatch = search(r'^(\s*#define\s+)(|[A-Z_][A-Z0-9_]*)' +
-			r'_VERSION_STRING(\s+)"([0-9]+)(\.[0-9]+\.[0-9]+\.[0-9]+")',
-			line)
-		nMatch = search(r'^(\s*#define\s+)(|[A-Z_][A-Z0-9_]*)' +
-			r'_VERSION_MAJOR(\s+)([0-9]+)')
-		if sMatch == None and nMatch == None:
-			continue
-		vMajorS = None
-		vMajorN = None
-		if sMatch != None:
-			replaced = True
-			vMajorS = int(sMatch.group(4))
-			lines[i] = (sMatch.group(1) + sMatch.group(2) + '_VERSION_STRING' +
-				sMatch.group(3) + '"' + str(vMajorS + 1) + sMatch.group(5))
-		if nMatch != None:
-			replaced = True
-			vMajorN = int(nMatch.group(4))
-			lines[i] = (nMatch.group(1) + nMatch.group(2) + '_VERSION_MAJOR' +
-				nMatch.group(3) + str(vMajorN + 1))
-		if vMajorS != vMajorN:
-			print('WARNING: Discrepancy in major version definitions')
+	from re import compile
+	sPatt = compile(r'^(\s*#define\s+)(|([A-Z_][A-Z0-9_]*))' +
+		r'(_VERSION_STRING\s+")([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)"')
+	nPatt = compile(r'^(\s*#define\s+)(|([A-Z_][A-Z0-9_]*))' +
+		r'(_VERSION_)(MAJOR|MINOR|RELEASE|BUILD)(\s+)([0-9]+)')
+	linesLen = len(lines)
+	i = 0
+	foundString = False
+	foundMajor = False
+	foundMinor = False
+	foundRelease = False
+	foundBuild = False
+	while i < linesLen:
+		sMatch = sPatt.search(lines[i])
+		if sMatch == None:
+			nMatch = nPatt.search(lines[i])
+			curLevel = nMatch.group(5).lower()
+			if nMatch == None:
+				i += 1
+				continue
+			number = int(nMatch.group(7), 10)
+			if level == 'major':
+				foundMajor = True
+				if curLevel != 'major':
+					number = 0
+				else: # Must be 'major' then
+					number += 1
+			if level == 'minor':
+				foundMinor = True
+				if curLevel != 'major' and curLevel != 'minor':
+					number = 0
+				elif curLevel == level:
+					number += 1
+			if level == 'release':
+				foundRelease = True
+				if curLevel == 'build':
+					number = 0
+				elif curLevel == level:
+					number += 1
+			if level == 'build':
+				foundBuild = True
+				if curLevel == level:
+					number += 1
+			lines[i] = (nMatch.group(1) + nMatch.group(2) + nMatch.group(4) +
+				nMatch.group(5) + nMatch.group(6) + str(number))
+		else:
+			foundString = True
+			vMajor = int(nMatch.group(5), 10)
+			vMinor = int(nMatch.group(6), 10)
+			vRelease = int(nMatch.group(7), 10)
+			vBuild = int(nMatch.group(8), 10)
+			if level == 'major':
+				vMajor += 1
+				vMinor = 0
+				vRelease = 0
+				vBuild = 0
+			elif level == 'minor':
+				vMinor += 1
+				vRelease = 0
+				vBuild = 0
+			elif level == 'release':
+				vRelease += 1
+				vBuild = 0
+			elif level == 'build':
+				vBuild += 1
+			lines[i] = (sMatch.group(1) + sMatch.group(2) + sMatch.group(4) +
+				str(vMajor) + '.' + str(vMinor) + '.' + str(vRelease) + '.' +
+				str(vBuild) + '"')
+		i += 1
 	f = open(path, 'w')
 	f.write(lines.join(linesep))
 	f.close()
-	if replaced == False:
-		print('WARNING: No version info definitions were found')
-
-
-
-## ============================ F U N C T I O N ============================ ##
-## void incrMinor(string)
-##
-## TITLE:       Increment minor version number
-## DESCRIPTION: Increments the minor version number by 1, resetting the release
-##              and build numbers to 0.
-##
-## PARAMETER: file path to the configuration header (usually C code) to modify.
-def incrMinor(path):
-	f = open(path, 'r')
-	from os import linesep
-	lines = f.read(0x7FFFFFFF).split(linesep)
-	f.close()
-	replaced = False
-	from re import search
-	for line, i in enumerate(lines):
-		sMatch = search(r'^(\s*#define\s+)(|[A-Z_][A-Z0-9_]*)' +
-			r'_VERSION_STRING(\s+"[0-9]+\.)([0-9]+)(\.[0-9]+\.[0-9]+")',
-			line)
-		nMatch = search(r'^(\s*#define\s+)(|[A-Z_][A-Z0-9_]*)' +
-			r'_VERSION_MINOR(\s+)([0-9]+)')
-		if sMatch == None and nMatch == None:
-			continue
-		vMajorS = None
-		vMajorN = None
-		if sMatch != None:
-			replaced = True
-			vMajorS = int(sMatch.group(4))
-			lines[i] = (sMatch.group(1) + sMatch.group(2) + '_VERSION_STRING' +
-				sMatch.group(3) + '"' + str(vMajorS + 1) + sMatch.group(5))
-		if nMatch != None:
-			replaced = True
-			vMajorN = int(nMatch.group(4))
-			lines[i] = (nMatch.group(1) + nMatch.group(2) + '_VERSION_MINOR' +
-				nMatch.group(3) + str(vMajorN + 1))
-		if vMajorS != vMajorN:
-			print('WARNING: Discrepancy in minor version definitions')
-	f = open(path, 'w')
-	f.write(lines.join(linesep))
-	f.close()
-	if replaced == False:
-		print('WARNING: No version info definitions were found')
-
-
-
-## ============================ F U N C T I O N ============================ ##
-## void incrRelease(string)
-##
-## TITLE:       Increment release version number
-## DESCRIPTION: Increments the release version number by 1, resetting the build
-##              version to 0.
-##
-## PARAMETER: file path to the configuration header (usually C code) to modify.
-def incrRelease(path):
-	f = open(path, 'r')
-	from os import linesep
-	lines = f.read(0x7FFFFFFF).split(linesep)
-	f.close()
-	replaced = False
-	from re import search
-	for line, i in enumerate(lines):
-		sMatch = search(r'^(\s*#define\s+)(|[A-Z_][A-Z0-9_]*)' +
-			r'_VERSION_STRING(\s+"[0-9]+\.[0-9]+\.)([0-9]+)(\.[0-9]+")',
-			line)
-		nMatch = search(r'^(\s*#define\s+)(|[A-Z_][A-Z0-9_]*)' +
-			r'_VERSION_RELEASE(\s+)([0-9]+)')
-		if sMatch == None and nMatch == None:
-			continue
-		vMajorS = None
-		vMajorN = None
-		if sMatch != None:
-			replaced = True
-			vMajorS = int(sMatch.group(4))
-			lines[i] = (sMatch.group(1) + sMatch.group(2) + '_VERSION_STRING' +
-				sMatch.group(3) + '"' + str(vMajorS + 1) + sMatch.group(5))
-		if nMatch != None:
-			replaced = True
-			vMajorN = int(nMatch.group(4))
-			lines[i] = (nMatch.group(1) + nMatch.group(2) + '_VERSION_RELEASE'
-				+ nMatch.group(3) + str(vMajorN + 1))
-		if vMajorS != vMajorN:
-			print('WARNING: Discrepancy in release version definitions')
-	f = open(path, 'w')
-	f.write(lines.join(linesep))
-	f.close()
-	if replaced == False:
-		print('WARNING: No version info definitions were found')
-
-
-
-## ============================ F U N C T I O N ============================ ##
-## void incrBuild(string)
-##
-## TITLE:       Increment build version number
-## DESCRIPTION: Increments the build version number by 1.
-##
-## PARAMETER: file path to the configuration header (usually C code) to modify.
-def incrBuild(path):
-	f = open(path, 'r')
-	from os import linesep
-	lines = f.read(0x7FFFFFFF).split(linesep)
-	f.close()
-	replaced = False
-	from re import search
-	for line, i in enumerate(lines):
-		sMatch = search(r'^(\s*#define\s+)(|[A-Z_][A-Z0-9_]*)' +
-			r'_VERSION_STRING(\s+"[0-9]+\.[0-9]+\.[0-9]+\.)([0-9]+)"',
-			line)
-		nMatch = search(r'^(\s*#define\s+)(|[A-Z_][A-Z0-9_]*)' +
-			r'_VERSION_MAJOR(\s+)([0-9]+)')
-		if sMatch == None and nMatch == None:
-			continue
-		vMajorS = None
-		vMajorN = None
-		if sMatch != None:
-			replaced = True
-			vMajorS = int(sMatch.group(4))
-			lines[i] = (sMatch.group(1) + sMatch.group(2) + '_VERSION_STRING' +
-				sMatch.group(3) + '"' + str(vMajorS + 1) + '"')
-		if nMatch != None:
-			replaced = True
-			vMajorN = int(nMatch.group(4))
-			lines[i] = (nMatch.group(1) + nMatch.group(2) + '_VERSION_BUILD' +
-				nMatch.group(3) + str(vMajorN + 1))
-		if vMajorS != vMajorN:
-			print('WARNING: Discrepancy in build version definitions')
-	f = open(path, 'w')
-	f.write(lines.join(linesep))
-	f.close()
-	if replaced == False:
-		print('WARNING: No version info definitions were found')
+	if foundString == False:
+		print('WARNING: Did not find any instances of a version string!')
+	if foundMajor == False:
+		print('WARNING: Did not find any instances of a major version number!')
+	if foundMinor == False:
+		print('WARNING: Did not find any instances of a minor version number!')
+	if foundRelease == False:
+		print('WARNING: Did not find any instances of a release version ' +
+			'number!')
+	if foundBuild == False:
+		print('WARNING: Did not find any instances of a build version number!')
 
 
 
@@ -210,18 +142,14 @@ def main(args):
 			if argc < 4:
 				raise Exception('No config header file specified.')
 			from os.path import isfile
-			if not isfile(args[3]):
+			if isfile(args[3]) == False:
 				raise Exception('The specified config header was not found.')
-			if args[2] == 'major':
-				incrMajor(args[3])
-			elif args[2] == 'minor':
-				incrMinor(args[3])
-			elif args[2] == 'release':
-				incrRelease(args[3])
-			elif args[2] == 'build':
-				incrBuild(args[3])
-			else:
+			if(args[2] != 'major'
+			and args[2] != 'minor'
+			and args[2] != 'release'
+			and args[2] != 'build'):
 				raise Exception('Invalid version level specified.')
+			modVersion(args[3], args[2])
 	except Exception as ex:
 		print('Exception raised:', ex)
 		return -2
