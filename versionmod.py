@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8; mode: Python; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 #
 # Copyright (C) 2017 Trinity Software, LLC. All rights reserved.
 #
@@ -31,13 +32,13 @@
 def modVersion(path, level):
 	f = open(path, 'r')
 	from os import linesep
-	lines = f.read(0x7FFFFFFF).split(linesep)
+	lines = f.read(0x7FFFFFFF).splitlines()
 	f.close()
 	replaced = False
 	from re import compile
-	sPatt = compile(r'^(\s*#define\s+)(|([A-Z_][A-Z0-9_]*))' +
+	sPatt = compile(r'^(\s*\#define\s+)(|([A-Z_][A-Z0-9_]*))' +
 		r'(_VERSION_STRING\s+")([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)"')
-	nPatt = compile(r'^(\s*#define\s+)(|([A-Z_][A-Z0-9_]*))' +
+	nPatt = compile(r'^(\s*\#define\s+)(|([A-Z_][A-Z0-9_]*))' +
 		r'(_VERSION_)(MAJOR|MINOR|RELEASE|BUILD)(\s+)([0-9]+)')
 	linesLen = len(lines)
 	i = 0
@@ -50,41 +51,45 @@ def modVersion(path, level):
 		sMatch = sPatt.search(lines[i])
 		if sMatch == None:
 			nMatch = nPatt.search(lines[i])
-			curLevel = nMatch.group(5).lower()
 			if nMatch == None:
 				i += 1
 				continue
+			curLevel = nMatch.group(5).lower()
 			number = int(nMatch.group(7), 10)
 			if level == 'major':
-				foundMajor = True
 				if curLevel != 'major':
 					number = 0
 				else: # Must be 'major' then
 					number += 1
 			if level == 'minor':
-				foundMinor = True
 				if curLevel != 'major' and curLevel != 'minor':
 					number = 0
 				elif curLevel == level:
 					number += 1
 			if level == 'release':
-				foundRelease = True
 				if curLevel == 'build':
 					number = 0
 				elif curLevel == level:
 					number += 1
 			if level == 'build':
-				foundBuild = True
 				if curLevel == level:
 					number += 1
+			if curLevel == 'major':
+				foundMajor = True
+			elif curLevel == 'minor':
+				foundMinor = True
+			elif curLevel == 'release':
+				foundRelease = True
+			elif curLevel == 'build':
+				foundBuild = True
 			lines[i] = (nMatch.group(1) + nMatch.group(2) + nMatch.group(4) +
 				nMatch.group(5) + nMatch.group(6) + str(number))
 		else:
 			foundString = True
-			vMajor = int(nMatch.group(5), 10)
-			vMinor = int(nMatch.group(6), 10)
-			vRelease = int(nMatch.group(7), 10)
-			vBuild = int(nMatch.group(8), 10)
+			vMajor = int(sMatch.group(5), 10)
+			vMinor = int(sMatch.group(6), 10)
+			vRelease = int(sMatch.group(7), 10)
+			vBuild = int(sMatch.group(8), 10)
 			if level == 'major':
 				vMajor += 1
 				vMinor = 0
@@ -104,7 +109,7 @@ def modVersion(path, level):
 				str(vBuild) + '"')
 		i += 1
 	f = open(path, 'w')
-	f.write(lines.join(linesep))
+	f.write('\n'.join(lines))
 	f.close()
 	if foundString == False:
 		print('WARNING: Did not find any instances of a version string!')
@@ -151,7 +156,7 @@ def main(args):
 				raise Exception('Invalid version level specified.')
 			modVersion(args[3], args[2])
 	except Exception as ex:
-		print('Exception raised:', ex)
+		raise ex
 		return -2
 	except:
 		print('Rogue exception:', sys.exc_info()[0])
