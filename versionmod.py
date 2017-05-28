@@ -136,6 +136,10 @@ def modVersion(path, level):
 ## RETURNS: Integer exit code; handed back to the operating system.
 def main(args):
 	try:
+		import os
+		if os.name == 'nt':
+			from subprocess import run, PIPE
+			run('chcp 65001', shell=True, check=True, stdout=PIPE)
 		print('\nProject Version Autoincrement Utility')
 		print('Part of the ÔÇô Working Set Toolchain')
 		print('Copyright © 2017 Trinity Software. All rights reserved.\n')
