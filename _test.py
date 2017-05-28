@@ -40,7 +40,7 @@ def vermodCheck(filePath, versions, testNum):
 	or search('_VERSION_RELEASE\\s+' + vRelease, text) == None
 	or search('_VERSION_BUILD\\s+' + vBuild, text) == None):
 		raise Exception(exPrefix + 'One or more definitions were missing ' +
-			'or invalid')
+			'or invalid.')
 	print(colour.green('SUCCESS') + ', Test #' + str(testNum))
 
 
@@ -94,6 +94,33 @@ def main(args):
 		versionmod.main(['versionmod.py', 'increment', 'major', sampleDstPath])
 		vermodCheck(sampleDstPath, [3, 0, 0, 0], 6)
 		import colour
+		print(colour.green('versionmod.py has passed testing.'))
+		# Suite B: CopyDeps script
+		exprefix = colour.red('FAILURE') + ', Test #7: '
+		from os import getcwd, listdir, path
+		srcDir = path.join(getcwd(), 'test', 'deps')
+		dstDir = path.join(getcwd(), 'build', 'test')
+		import copydeps
+		if(copydeps.main(['copydeps.py', srcDir, dstDir, '64', 'release'])
+		!= 0):
+			raise Exception(exprefix + 'CopyDeps program failed testing.')
+		assets = listdir(path.join(srcDir, 'assets', 'release'))
+		for asset in assets:
+			if path.isfile(asset) == False:
+				continue
+			bname = path.basename(asset)
+			if path.isfile(path.join(dstDir, bname)) == False:
+				raise Exception(exprefix + 'Asset file "' + bname + '" was ' +
+					'not copied into the destination directory.')
+		libs = listdir(path.join(srcDir, 'lib64', 'release'))
+		for lib in libs:
+			if path.isfile(lib) == False:
+				continue
+			bname = path.basename(lib)
+			if path.isfile(path.join(dstDir, bname)) == False:
+				raise Exception(exprefix + 'Library file "' + bname + '" was' +
+					' not copied into the destination directory.')
+		print(colour.green('copydeps.py has passed testing.') + '\n...')
 		print(colour.green('All tests have passed.') + ' Exiting...')
 	except Exception as ex:
 		raise ex

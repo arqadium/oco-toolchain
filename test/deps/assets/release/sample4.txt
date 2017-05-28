@@ -1,0 +1,8 @@
+Testing
+
+newlines
+
+should
+be
+CR
+LF
