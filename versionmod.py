@@ -155,6 +155,15 @@ def main(args):
 			and args[2] != 'build'):
 				raise Exception('Invalid version level specified.')
 			modVersion(args[3], args[2])
+		elif args[1] == 'help':
+			if argc > 2:
+				i = 2
+				while i < argc:
+					print('Unknown help option "%s"' % args[i])
+					i += 1
+				print('\nUsage:-\n')
+				print('    $ python3 versionmod.py increment ', end='')
+				print('<versionlevel> <config header>\n')
 	except Exception as ex:
 		raise ex
 		return -2
