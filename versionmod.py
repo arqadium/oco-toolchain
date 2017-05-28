@@ -136,6 +136,9 @@ def modVersion(path, level):
 ## RETURNS: Integer exit code; handed back to the operating system.
 def main(args):
 	try:
+		print('\nProject Version Autoincrement Utility')
+		print('Part of the ÔÇô Working Set Toolchain')
+		print('Copyright © 2017 Trinity Software. All rights reserved.\n')
 		import colour
 		argc = len(args)
 		if argc == 1:
