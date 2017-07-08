@@ -1,0 +1,66 @@
+
+
+
+******************************************************************************
+**                      ,,                                                  **
+**                    ,d88b,                                                **
+**                  ,d8P'`Y8b,                                              **
+**                 I8"      "8I                                             **
+**                  ,ad8888ba,      ,ad8888ba,        ,                     **
+**                 d8"'    `"8b    d8"'    `"8b     ,d8b,                   **
+**                d8'        `8b  d8'             ,8'   `8,                 **
+**                88          88  88              ,adPPYba,                 **
+**                88          88  88             a8"     "8a                **
+**                Y8,        ,8P  Y8,            8b       d8                **
+**                 Y8a.    .a8P    Y8a.    .a8P  "8a,   ,a8"                **
+**                  `"Y8888Y"'      `"Y8888Y"'    `"YbbdP"'                 **
+**                                      `8,                                 **
+**                                     ,ad'                                 **
+**                                                                          **
+**     Arqadium's "OCo Toolchain": a supplemental toolset for Arqadium.     **
+**                                                                          **
+**            Copyright (C) 2017 Arqadium.  All rights reserved.            **
+**       Most sources released under the  Mozilla Public Licence 2.0;       **
+**   See all COPYING notices and source files for details and exceptions.   **
+**                                                                          **
+******************************************************************************
+
+
+
+-----
+
+
+
+0. GENERAL PREFACE
+
+    For most of the general details regarding our "OCo" project collection and
+our company at large, visit <https://github.com/arqadium/oco-engine#readme>.
+This document specifically covers important details regarding the OCo Working
+Set Toolchain.
+
+
+
+1. INTRODUCTION
+
+    General-purpose toolchains are built to solve general problems, and it's
+not uncommon for teams and companies to face unique challenges that few or no
+people have dealt with, leaving them on their own to solve those problems.
+With that in mind, we are dedicating a repository ahead-of-time to extending
+the functionality of general purpose software suites such as Visual Studio and
+the GNU toolchain for our own purposes. All of our build scripts (written in
+Python) reside here alongside their dependencies, and we intend to build other
+types of command-line programs for other tasks such as testing and deployment.
+
+
+
+2. WHY OUR TOOLCHAIN IS FOSS
+
+    One may ask, "Your OCo Engine is FOSS, but you know how to monetise it.
+How do you plan to collect ROI from a sister project like this?" To answer
+this, it's important to look at the bigger picture comprising what we're
+building: a video game. As far as our bottom line goes, we save ourselves
+money while still collecting ROI by making Free Software - this is not limited
+to the things immediate to the game itself. After all, you'll probably need
+these things to build the engine anyway! There are of course the benefits of
+crowd-sourcing and the public eye on bug reporting that would be out-of-reach
+in a closed environment.

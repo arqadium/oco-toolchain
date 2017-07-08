@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; mode: Python; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 #
-# Copyright (C) 2017 Trinity Software, LLC. All rights reserved.
+# OCO WORKING SET TOOLCHAIN
+# Copyright (C) 2017 Arqadium. All rights reserved.
 #
-# This document contains proprietary information of TRINITY SOFTWARE and/or its
-# licenced developers and are protected by national and international copyright
-# laws. They may not be disclosed to third parties or copied or duplicated in
-# any form, in whole or in part, without the prior written consent of
-# Trinity Software, LLC.
+# This Source Code Form is subject to the terms of the Mozilla Public License,
+# version 2.0.  If a copy of the MPL was not distributed with this file, then
+# you can obtain one at <http://mozilla.org/MPL/2.0/>.
 #
 
 
