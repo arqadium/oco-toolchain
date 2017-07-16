@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-void RobinWilliams( )
+extern "C" void RobinWilliams( )
 {
     std::cout << " - Robin Williams" << std::endl;
 }
