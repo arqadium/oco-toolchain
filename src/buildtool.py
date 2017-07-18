@@ -17,17 +17,18 @@ import glob, ini, os, platform, sys
 
 _prefix = color('[\u00D4\u00C7\u00F4]', fg='white', style='bold')
 _actions = {
-    'asm':   color(fg='green',   s='Assembling') + '      ',
-    'c':     color(fg='cyan',    s='Compiling') + '       ',
-    'cxx':   color(fg='blue',    s='Compiling') + '       ',
-    'gfx':   color(fg='yellow',  s='Transmogrifying') + ' ',
-    'conv':  color(fg='red',     s='Converting') + '      ',
-    'link':  color(fg='magenta', s='Linking') + '         ',
-    'lint':  color(fg='white',   s='Linting') + '         ',
+    'asm':   color(fg='green',                s='Assembling') + '      ',
+    'c':     color(fg='cyan',                 s='Compiling') + '       ',
+    'cxx':   color(fg='blue',                 s='Compiling') + '       ',
+    'd':     color(fg='magenta',              s='Compiling') + '       ',
+    'gfx':   color(fg='yellow',               s='Transmogrifying') + ' ',
+    'conv':  color(fg='yellow', style='bold', s='Converting') + '      ',
+    'link':  color(fg='red',                  s='Linking') + '         ',
+    'lint':  color(fg='white',                s='Linting') + '         ',
     'clean': color(fg='white', style='bold', s='Cleaning') + ' '
 }
 _heads = {
-    'start': color('Compilation started', fg='white', style='bold+underline'),
+    'start': color('Compilation started', fg='blue', style='bold+underline'),
     'pass':  color('Compilation passed', fg='green', style='bold+underline'),
     'fail':  color('Compilation failed', fg='red', style='bold+underline')
 }
@@ -81,8 +82,8 @@ def getSources(srcDir, lang):
         files += glob.glob(os.path.join(srcDir, '**', '*.s'), recursive=True)
         files += glob.glob(os.path.join(srcDir, '**', '*.asm'),
             recursive=True)
-    #elif lang == 'd':
-    #    files += glob.glob(os.path.join(srcDir, '**', '*.d'), recursive=True)
+    elif lang == 'd':
+        files += glob.glob(os.path.join(srcDir, '**', '*.d'), recursive=True)
     else:
         raise Exception('Invalid source language requested: \u2018' + lang +
             '\u2019')
@@ -103,16 +104,18 @@ def getSources(srcDir, lang):
 def compile(source, lang, srcDir, incDir, outName, outDir, debug=False):
     flags = [
         '-fPIC',
-        '-mtune=generic',
-        '-mfpmath=sse',
         '-c'
     ]
     tool = 'gcc'
     act = 'c'
     if sys.platform == 'win32':
-        pass
-    elif lang == 'c':
+        return
+    if lang.startswith('c'):
+        flags += ['-iquote', incDir]
+    if lang == 'c':
         flags += [
+            '-mtune=generic',
+            '-mfpmath=sse',
             '-x',
             'c',
             '-std=c11'
@@ -121,30 +124,48 @@ def compile(source, lang, srcDir, incDir, outName, outDir, debug=False):
         tool = 'g++'
         act = 'cxx'
         flags += [
+            '-mtune=generic',
+            '-mfpmath=sse',
             '-x',
             'c++',
             '-std=c++14'
         ]
+    elif lang == 'd':
+        tool = 'dmd'
+        act = 'd'
+        flags += ['-color']
     if sys.platform.startswith('linux'):
-        flags += ['-DLINUX=1']
-        if _is64bit:
-            flags += ['-m64', '-march=sandybridge', '-mavx', '-DARCH=64']
+        if lang == 'd':
+            if _is64bit:
+                flags += ['-m64']
+            else:
+                flags += ['-m32']
         else:
-            flags += ['-m32', '-march=pentium4', '-DARCH=32']
-    elif sys.platform == 'darwin':
-        flags += ['-DDARWIN=1']
-        flags += ['-m64', '-march=sandybridge', '-mavx', '-DARCH=64']
+            flags += ['-DLINUX=1']
+            if _is64bit:
+                flags += ['-m64', '-march=sandybridge', '-mavx', '-DARCH=64']
+            else:
+                flags += ['-m32', '-march=pentium4', '-DARCH=32']
     else:
         raise Exception('Unsupported UNIX-like platform')
     if debug:
-        flags += ['-UNDEBUG']
+        if lang == 'd':
+            flags += ['-w', '-profile', '-boundscheck=on', '-mcpu=native',
+                '-gc', '-debug', '-v']
+        else:
+            flags += ['-UNDEBUG']
     else:
-        flags += ['-DNDEBUG=1']
+        if lang == 'd':
+            flags += ['-release', '-boundscheck=off', '-wi']
+        else:
+            flags += ['-DNDEBUG=1']
     pprint(source, action=act)
-    run(tool + ' ' + ' '.join(flags) + ' -iquote ' + incDir + ' -o ' +
-        os.path.join(outDir, 'code', outName, source.replace(srcDir + os.sep,
-        '').replace(os.sep, '+')) + '.o ' + source, shell=True, check=True,
-        stdout=PIPE)
+    outputFlag = ' -o '
+    if lang == 'd':
+        outputFlag = ' -of='
+    run(tool + ' ' + ' '.join(flags) + outputFlag + os.path.join(outDir,
+        'code', outName, source.replace(srcDir + os.sep, '').replace(os.sep,
+        '+')) + '.o ' + source, shell=True, check=True, stdout=PIPE)
 
 
 
@@ -172,7 +193,12 @@ def buildExec(srcDir, incDir, libs, langs, outName, outDir, type):
         libflags += ' -l ' + lib
     ofiles = ' '.join(glob.glob(os.path.join(outDir, 'code', outName, '*.o')))
     pprint(outName, action='link')
-    run('g++ -L ' + outDir + libflags + ' -o ' + os.path.join(outDir,
+    linkerStart = 'g++ -L '
+    outputFlag = ' -o '
+    if 'd' in langs:
+        linkerStart = 'dmd -L-rpath='
+        outputFlag = ' -of='
+    run(linkerStart + outDir + libflags + outputFlag + os.path.join(outDir,
         outName) + ' ' + ofiles, shell=True, check=True, stdout=PIPE)
 
 
@@ -201,7 +227,12 @@ def buildShared(srcDir, incDir, libs, langs, outName, outDir, type):
         libflags += ' -l ' + lib
     ofiles = ' '.join(glob.glob(os.path.join(outDir, 'code', outName, '*.o')))
     pprint(outName, action='link')
-    run('g++ -L ' + outDir + libflags + ' -o' + os.path.join(outDir,
+    linkerStart = 'g++ -L '
+    outputFlag = ' -o '
+    if 'd' in langs:
+        linkerStart = 'dmd -L-rpath='
+        outputFlag = ' -of='
+    run(outputFlag + outDir + libflags + outputFlag + os.path.join(outDir,
         'lib' + outName) + '.so -shared ' + ofiles, shell=True, check=True,
         stdout=PIPE)
 
@@ -231,6 +262,8 @@ def buildStatic(srcDir, incDir, libs, langs, outName, outDir, type):
         libflags += ' -l ' + lib
     ofiles = ' '.join(glob.glob(os.path.join(outDir, 'code', outName, '*.o')))
     pprint(outName, action='link')
+    if 'd' in langs:
+        raise Exception('Cannot yet build static library from D source.')
     run('g++ -L ' + outDir + libflags + ' -o ' + os.path.join(outDir,
         'lib' + outName) + '.a -static ' + ofiles, shell=True, check=True,
         stdout=PIPE)
