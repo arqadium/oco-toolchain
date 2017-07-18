@@ -389,6 +389,7 @@ def lint(projDir):
     projectIni = _init[0]
     srcDir = _init[2]
     langs = _init[4]
+    progs = []
     if 'cxx' in langs or 'c' in langs:
         progs += ['clang-format']
         if os.name == 'nt':
