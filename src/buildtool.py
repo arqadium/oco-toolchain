@@ -389,27 +389,30 @@ def lint(projDir):
     projectIni = _init[0]
     srcDir = _init[2]
     langs = _init[4]
-    progs = []
     if 'cxx' in langs or 'c' in langs:
         progs += ['clang-format']
         if os.name == 'nt':
             progs[-1] += '.exe'
     if 'd' in langs:
-        progs += ['dscanner']
+        progs += ['dfmt']
         if os.name == 'nt':
             progs[-1] += '.exe'
     for prog in progs:
         if which(prog) == None:
             raise Exception('Linting program "' + prog + '" is missing')
+    binSuffix = ''
+    if os.name == 'nt':
+        binSuffix = '.exe'
     for lang in langs:
         sources = getSources(srcDir, lang, True)
         for source in sources:
             pprint(source, action='lint')
             if lang == 'd':
-                run('dfmt ' + source, shell=True, check=True, stdout=PIPE)
+                run('dfmt' + binSuffix + ' ' + source, shell=True, check=True,
+                    stdout=PIPE)
             else:
-                run('clang-format -style=file ' + source, shell=True,
-                    check=True, stdout=PIPE)
+                run('clang-format' + binSuffix + ' -i -style=file ' + source,
+                    shell=True, check=True, stdout=PIPE)
 
 
 
