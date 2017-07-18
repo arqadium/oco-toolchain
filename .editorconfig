@@ -1,0 +1,2 @@
+max_line_length = 100
+dfmt_space_after_keywords = false

@@ -232,7 +232,7 @@ def buildShared(srcDir, incDir, libs, langs, outName, outDir, type):
     if 'd' in langs:
         linkerStart = 'dmd -L-rpath='
         outputFlag = ' -of='
-    run(outputFlag + outDir + libflags + outputFlag + os.path.join(outDir,
+    run(linkerStart + outDir + libflags + outputFlag + os.path.join(outDir,
         'lib' + outName) + '.so -shared ' + ofiles, shell=True, check=True,
         stdout=PIPE)
 
@@ -270,14 +270,7 @@ def buildStatic(srcDir, incDir, libs, langs, outName, outDir, type):
 
 
 
-## ============================ F U N C T I O N ============================ #
-## integer build(string)
-##
-## TITLE:       Build Project
-## DESCRIPTION: Builds a single project from source.
-##
-## PARAMETER: Directory where the project is located.
-def build(projDir, type):
+def projectInit(projDir):
     # Ensure INIs all exist
     projectIniPath = os.path.join(projDir, 'project.ini')
     if os.path.isfile(projectIniPath) == False:
@@ -302,6 +295,25 @@ def build(projDir, type):
         langs += _langs.split(',')
     else:
         langs = [_langs]
+    return (projectIni, assetsIni, srcDir, incDir, langs)
+
+
+
+## ============================ F U N C T I O N ============================ #
+## integer build(string)
+##
+## TITLE:       Build Project
+## DESCRIPTION: Builds a single project from source.
+##
+## PARAMETER: Directory where the project is located.
+## PARAMETER: Type of project to compile; may be 'debug' or 'release'.
+def build(projDir, type):
+    _init = projectInit(projDir)
+    projectIni = _init[0]
+    assetsIni = _init[1]
+    srcDir = _init[2]
+    incDir = _init[3]
+    langs = _init[4]
     # Set up output file strings
     outName = projectIni['output']['name']
     outDir = os.path.join(os.getcwd(), projectIni['output']['path'])
@@ -324,6 +336,68 @@ def build(projDir, type):
         buildStatic(srcDir, incDir, libs, langs, outName, outDir, type)
     else:
         raise Exception('Invalid output type for project')
+
+
+
+## ============================ F U N C T I O N ============================ #
+## integer which(string)
+##
+## TITLE:       Which Executable
+## DESCRIPTION: Checks for the location of executable on the system.
+##
+## PARAMETER: Name of the binary to check for.
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
+
+
+
+## ============================ F U N C T I O N ============================ #
+## integer lint(string)
+##
+## TITLE:       Lint Project
+## DESCRIPTION: Lints/formats all of the code in a given project. Currently
+##              supports C code using lint, C++ code using clang-format, and
+##              D code using dscanner.
+##
+## PARAMETER: Directory where the project is located.
+def lint(projDir):
+    _init = projectInit(projDir)
+    projectIni = _init[0]
+    srcDir = _init[2]
+    langs = _init[4]
+    progs = []
+    if 'cxx' in langs or 'c' in langs:
+        progs += ['clang-format']
+        if os.name == 'nt':
+            progs[-1] += '.exe'
+    if 'd' in langs:
+        progs += ['dscanner']
+        if os.name == 'nt':
+            progs[-1] += '.exe'
+    for prog in progs:
+        if which(prog) == None:
+            raise Exception('Linting program "' + prog + '" is missing')
+    for lang in langs:
+        sources = getSources(srcDir, lang)
+        for source in sources:
+            pprint(source, action='lint')
+            if lang == 'd':
+                run('dfmt ' + source, shell=True, check=True, stdout=PIPE)
+            else:
+                run('clang-format -style=file ' + source, shell=True,
+                    check=True, stdout=PIPE)
 
 
 
@@ -354,12 +428,16 @@ def main(args):
         raise Exception('Insufficient arguments provided')
     if os.path.isfile(args[1]) == False:
         raise Exception('Provided INI file is inaccessible')
-    from re import fullmatch
-    if fullmatch(r'debug|release', args[2]) == None:
-        raise Exception('Provided build type is invalid')
     mainIni = ini.parse(args[1])
     if int(mainIni['']['version']) > 0:
         raise Exception('Future INI schema version found; not supported')
+    if args[2] == 'lint':
+        for key in mainIni['projects']:
+            lint(mainIni['projects'][key])
+        return 0
+    from re import fullmatch
+    if fullmatch(r'debug|release', args[2]) == None:
+        raise Exception('Provided build type is invalid')
     pprint(head='start')
     try:
         for key in mainIni['projects']:
