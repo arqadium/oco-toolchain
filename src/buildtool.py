@@ -64,11 +64,14 @@ def pprint(s=None, action=None, head=None):
 ## PARAMETER: Language of files to search for.
 ##
 ## RETURNS: The list of source files as pathnames.
-def getSources(srcDir, lang):
+def getSources(srcDir, lang, headers=False):
     files = []
     if lang == 'c':
         files += glob.glob(os.path.join(srcDir, '**', '*.c'),
             recursive=True)
+        if headers:
+            files += glob.glob(os.path.join(srcDir, '**', '*.h'),
+                recursive=True)
     elif lang == 'c++':
         files += glob.glob(os.path.join(srcDir, '**', '*.cc'),
             recursive=True)
@@ -78,6 +81,15 @@ def getSources(srcDir, lang):
             recursive=True)
         files += glob.glob(os.path.join(srcDir, '**', '*.c++'),
             recursive=True)
+        if headers:
+            files += glob.glob(os.path.join(srcDir, '**', '*.hh'),
+                recursive=True)
+            files += glob.glob(os.path.join(srcDir, '**', '*.hpp'),
+                recursive=True)
+            files += glob.glob(os.path.join(srcDir, '**', '*.hxx'),
+                recursive=True)
+            files += glob.glob(os.path.join(srcDir, '**', '*.h++'),
+                recursive=True)
     elif lang == 'asm':
         files += glob.glob(os.path.join(srcDir, '**', '*.s'), recursive=True)
         files += glob.glob(os.path.join(srcDir, '**', '*.asm'),
@@ -390,7 +402,7 @@ def lint(projDir):
         if which(prog) == None:
             raise Exception('Linting program "' + prog + '" is missing')
     for lang in langs:
-        sources = getSources(srcDir, lang)
+        sources = getSources(srcDir, lang, True)
         for source in sources:
             pprint(source, action='lint')
             if lang == 'd':
