@@ -96,6 +96,9 @@ def getSources(srcDir, lang, headers=False):
             recursive=True)
     elif lang == 'd':
         files += glob.glob(os.path.join(srcDir, '**', '*.d'), recursive=True)
+        if headers:
+            files += glob.glob(os.path.join(srcDir, '**', '*.di'),
+                recursive=True)
     else:
         raise Exception('Invalid source language requested: \u2018' + lang +
             '\u2019')
@@ -201,17 +204,21 @@ def buildExec(srcDir, incDir, libs, langs, outName, outDir, type):
             compile(source, lang, srcDir, incDir, outName, outDir,
                 type == 'debug')
     libflags = ''
+    libs += ['gcc_s', 'c', 'gcc_s', 'stdc++', 'm', 'gcc_s', 'c', 'gcc_s']
     for lib in libs:
+        if 'd' in langs:
+            libflags += ' -L--library=' + lib
+            continue
         libflags += ' -l ' + lib
     ofiles = ' '.join(glob.glob(os.path.join(outDir, 'code', outName, '*.o')))
     pprint(outName, action='link')
     linkerStart = 'g++ -L '
     outputFlag = ' -o '
     if 'd' in langs:
-        linkerStart = 'dmd -L-rpath='
+        linkerStart = 'dmd -L--library-path='
         outputFlag = ' -of='
-    run(linkerStart + outDir + libflags + outputFlag + os.path.join(outDir,
-        outName) + ' ' + ofiles, shell=True, check=True, stdout=PIPE)
+    run(linkerStart + outDir + outputFlag + os.path.join(outDir, outName) +
+        ' ' + ofiles + libflags, shell=True, check=True, stdout=PIPE)
 
 
 
