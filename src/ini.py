@@ -9,6 +9,8 @@
 # you can obtain one at <http://mozilla.org/MPL/2.0/>.
 #
 
+import re
+
 
 
 ## ============================ F U N C T I O N ============================ #
@@ -23,20 +25,17 @@
 ##
 ## RETURNS: A dict<string, dict<string, string>> containing the INI's data.
 def parse(fileName):
-    from os import linesep
     f = open(fileName, 'r')
-    iniLines = f.read(0x7FFFFFFF).split('\n')
+    iniLines = f.read().splitlines()
     f.close
     badLines = []
     curSect = '' # Must be blank, for sectionless key/value pairs at the top
     ret = {'': {}}
-    from re import fullmatch
+    expIgnore = re.compile(r'\s*([#;].*)?')
     for line in iniLines:
-        if fullmatch(r'\s*[#;][^$]*', line) != None:
+        if expIgnore.fullmatch(line) != None:
             continue
-        if fullmatch(r'\s*', line) != None:
-            continue
-        if line.startswith('['):
+        if len(line) > 0 and line[0] == '[':
             name = line.lstrip('[').rstrip(']').lower()
             ret[name] = {}
             curSect = name
@@ -48,7 +47,7 @@ def parse(fileName):
                 continue
             ret[curSect][key] = pair[1]
         else:
-            badLines[len(badLines)] = line
+            badLines += [line]
     if len(badLines) > 0:
         raise Exception('Parsing failed due to malformed syntax; the ' +
             'following lines were found to be invalid:\n' + '\n'.join(badLines)
