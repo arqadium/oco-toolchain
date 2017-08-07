@@ -494,12 +494,13 @@ def main(args):
                     else:
                         os.makedirs(pObjPath)
                 # Direct path to source code
-                pSrcPath = os.path.join(project['srcDir'],
-                    project['projIni']['']['name'],
-                    project['projIni']['source']['sourcedir'])
+                pSrcPath = os.path.join(mainIni['projects'][projectNames[i
+                    ]].replace('/', os.sep), project['srcDir'].replace('/',
+                    os.sep))
                 # Paths for C(++) #includes and D imports
-                pIncPaths = [project['projIni']['source']['includedir'
+                pIncPaths = [os.path.join(mainIni['']['includedir'
                     ].replace('/', os.sep), project['incDir'].replace('/',
+                    os.sep)), mainIni['']['includedir'].replace('/',
                     os.sep)] + INCDIRS + localIncPaths
                 pObjGlob = os.path.join(pObjPath, '**', '*' + OBJEXT)
                 libDepsPath = ''
@@ -552,13 +553,13 @@ def main(args):
                                     flags += ['/MD']
                         sources = getSources(pSrcPath, ['c'])
                         for source in sources:
+                            source = source.replace('.' + os.sep, '')
                             com = [CC] + flags
                             if os.name != 'nt':
                                 com += [COUTFLAG, os.path.join(pObjPath,
                                     os.path.basename(source) + OBJEXT)]
                             com += [source]
-                            # [2:] removes "./"
-                            pprint(source[2:], action='c')
+                            pprint(source, action='c')
                             try:
                                 run(' '.join(com), shell=True, check=True,
                                     stdout=PIPE)
@@ -595,13 +596,13 @@ def main(args):
                                     flags += ['/MD']
                         sources = getSources(pSrcPath, ['c++'])
                         for source in sources:
+                            source = source.replace('.' + os.sep, '')
                             com = [CXX] + flags
                             if os.name != 'nt':
                                 com += [COUTFLAG, os.path.join(pObjPath,
                                     os.path.basename(source) + OBJEXT)]
                             com += [source]
-                            # [2:] removes "./"
-                            pprint(source[2:], action='c++')
+                            pprint(source, action='c++')
                             try:
                                 run(' '.join(com), shell=True, check=True,
                                     stdout=PIPE)
@@ -626,12 +627,13 @@ def main(args):
                             flags += [DINCFLAG + incDir]
                         sources = getSources(pSrcPath, ['d'])
                         for source in sources:
+                            source = source.replace('.' + os.sep, '')
                             # Ignore these, only DMD cares about them
                             # They overwrite each other anyway
                             if source.endswith('package.d'):
                                 continue
                             com = [DC, source] + flags
-                            pprint(source[2:], action='d') # [2:] removes "./"
+                            pprint(source, action='d')
                             try:
                                 run(' '.join(com), shell=True, check=True,
                                     stdout=PIPE)
